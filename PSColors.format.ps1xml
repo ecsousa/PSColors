@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+  <SelectionSets>
+    <SelectionSet>
+      <Name>FileSystemTypes</Name>
+      <Types>
+        <TypeName>System.IO.DirectoryInfo</TypeName>
+        <TypeName>System.IO.FileInfo</TypeName>
+      </Types>
+    </SelectionSet>
+  </SelectionSets>
+
+  <ViewDefinitions>
+    <View>
+      <Name>children</Name>
+      <ViewSelectedBy>
+        <SelectionSetName>FileSystemTypes</SelectionSetName>
+      </ViewSelectedBy>
+      <GroupBy>
+        <PropertyName>PSParentPath</PropertyName>
+        <CustomControlName>FileSystemTypes-GroupingFormat</CustomControlName>
+      </GroupBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>Mode</Label>
+            <Width>7</Width>
+            <Alignment>left</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>LastWriteTime</Label>
+            <Width>25</Width>
+            <Alignment>right</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Length</Label>
+            <Width>10</Width>
+            <Alignment>right</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Name</Label>
+            <Alignment>Left</Alignment>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <Wrap/>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>Mode</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                  [String]::Format("{0,10}  {1,8}", $_.LastWriteTime.ToString("d"), $_.LastWriteTime.ToString("t"))
+                </ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>Length</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                    $name = $_.Name
+
+
+                    if(-not($global:SuppresPSUtilsColoring)) {
+                        $regexOptions = ([System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+
+                        $executables = @('exe', 'bat', 'cmd', 'py', 'pl', 'ps1', 'psm1', 'vbs', 'rb', 'reg', 'fsx')
+                        $compresseds = @('zip', 'tar', 'gz', '[rjw]ar', 'arj', 'tgz', 'gz')
+                        $texts = @('txt', 'cfg', 'conf', 'ini', 'csv', 'log', 'xml', 'java', 'c(pp)?', 'fs', 'html?')
+
+                        $executableRegex = New-Object regex("\.($([string]::Join('|', $executables)))`$", $regexOptions)
+                        $compressedRegex = New-Object regex("\.($([string]::Join('|', $compresseds)))`$", $regexOptions)
+                        $textRegex = New-Object regex("\.($([string]::Join('|', $texts)))`$", $regexOptions)
+
+                        $directoryColor = "$([char](27))[34;1m"
+                        $executableColor = "$([char](27))[32;1m"
+                        $compressedColor = "$([char](27))[31;1m"
+                        $textColor = "$([char](27))[33;1m"
+                        $resetColor = "$([char](27))[0m"
+
+                        if ($_ -is [System.IO.DirectoryInfo]) {
+                            $name = "$directoryColor$name/$resetColor"
+                        }
+                        elseif ($compressedRegex.IsMatch($_.Name)) {
+                            $name = "$compressedColor$name$resetColor"
+                        }
+                        elseif ($executableRegex.IsMatch($_.Name)) {
+                            $name = "$executableColor$name*$resetColor"
+                        }
+                        elseif ($textRegex.IsMatch($_.Name)) {
+                            $name = "$textColor$name$resetColor"
+                        }
+                     }
+
+
+                  $name
+                </ScriptBlock>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>
