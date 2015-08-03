@@ -8,7 +8,12 @@ This PowerShell provides no functions to be used. Isntead it will provide some c
 
 ## Installing
 
-If you have [PsGet](http://psget.net/) installed:
+Windows 10 users:
+
+    Install-Module PSColors -Scope CurrentUser
+
+Otherwise, if you have [PsGet](http://psget.net/) installed:
+
 
     Install-Module PSColors
   
