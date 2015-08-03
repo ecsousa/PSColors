@@ -41,7 +41,7 @@ function Test-Git {
     return Test-Git ($dir.Parent.FullName)
 }
 
-function Write-Prompt {
+function prompt {
     if($global:FSFormatDefaultColor) {
         [Console]::ForegroundColor = $global:FSFormatDefaultColor
     }
@@ -140,7 +140,7 @@ function Write-Prompt {
 
 }
 
-function Out-FilePSColors { 
+function Out-File { 
     
     [CmdletBinding(DefaultParameterSetName='ByPath', SupportsShouldProcess=$true, ConfirmImpact='Medium', HelpUri='http://go.microsoft.com/fwlink/?LinkID=113363')]
     param(
@@ -310,16 +310,7 @@ function Out-FilePSColors {
 #>
 }
 
-
-Set-Alias prompt Write-Prompt
-Export-ModuleMember -Function Write-Prompt -Alias prompt
-
-
 if(Test-Ansi) {
-    Set-Alias Out-File Out-FilePSColors
-
-    Export-ModuleMember -function Out-FilePSColors
-    Export-ModuleMember -alias Out-File
     Update-FormatData -Prepend (Join-Path $PSScriptRoot PSColors.format.ps1xml)
 }
 
