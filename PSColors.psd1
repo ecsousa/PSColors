@@ -10,4 +10,8 @@ CLRVersion = '4.0'
 FunctionsToExport = @('prompt', 'Out-File')
 AliasesToExport = @('')
 HelpInfoURI = 'https://github.com/ecsousa/PSColors'
+PrivateData = @{
+        Tags='Prompt Coloring'
+        ProjectUri='https://github.com/ecsousa/PSColors'
+    }
 }
