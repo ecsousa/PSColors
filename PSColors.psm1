@@ -58,8 +58,10 @@ function prompt {
 
     $branch = $null;
 
-    if( $isFS -and (Test-Git (cvpa .)) -and (Get-Command git)) {
-        $branch = (git branch 2>$null) | %{ ([regex] '\* (.*)').match($_) } | ? { $_.Success } | %{ $_.Groups[1].Value } | Select-Object -First 1
+    if(-not(Get-Command Write-VcsStatus -ErrorAction SilentlyContinue)) {
+        if( $isFS -and (Test-Git (cvpa .)) -and (Get-Command git)) {
+            $branch = (git branch 2>$null) | %{ ([regex] '\* (.*)').match($_) } | ? { $_.Success } | %{ $_.Groups[1].Value } | Select-Object -First 1
+        }
     }
 
     $drive = (Get-Location).Drive
@@ -81,60 +83,34 @@ function prompt {
 
     $host.UI.RawUI.WindowTitle = $title
 
-    if(Test-Ansi) {
-        $begining = ''
 
-        $ending = '>' * ($nestedPromptLevel + 1)
-
-        function esc {
-            param([string] $code);
-            [char](27) + "[$code"
-        }
-
-        if($admin) {
-            $color = '33;1m';
-        }
-        else {
-            $color = '32;1m';
-        }
-
-        if($host.UI.RawUI.CursorPosition.ToString() -ne '0,0')
-        {
-            $begining = $begining + [Environment]::NewLine;
-        }
-
-        if($branch) {
-            $begining = $begining + "$(esc '33;1m')[$(esc '36;1m')$branch$(esc '33;1m')] ";
-        }
-
-        return ( $begining + (esc $color) + $executionContext.SessionState.Path.CurrentLocation + $ending + (esc '37;2m') )
+    if($admin) {
+        $color = 'Yellow';
     }
     else {
+        $color = 'Green';
+    }
 
-        if($admin) {
-            $color = 'Yellow';
-        }
-        else {
-            $color = 'Green';
-        }
+    Write-Host ([System.Char](10)) -NoNewLine;
 
-        Write-Host ([System.Char](10)) -NoNewLine;
+    if($branch) {
+        Write-Host "[" -NoNewLine -ForegroundColor Yellow
+        Write-Host "$branch" -NoNewLine -ForegroundColor Cyan
+        Write-Host "] " -NoNewLine -ForegroundColor Yellow
+    }
 
-        if($branch) {
-            Write-Host "[" -NoNewLine -ForegroundColor Yellow
-            Write-Host "$branch" -NoNewLine -ForegroundColor Cyan
-            Write-Host "] " -NoNewLine -ForegroundColor Yellow
-        }
+    if(Get-Command Write-VcsStatus -ErrorAction SilentlyContinue) {
+        Write-VcsStatus;
+    }
 
-        Write-Host $executionContext.SessionState.Path.CurrentLocation -NoNewLine -ForegroundColor $color;
-        Write-Host ('>' * ($nestedPromptLevel + 1)) -NoNewLine -ForegroundColor $color;
+    Write-Host $executionContext.SessionState.Path.CurrentLocation -NoNewLine -ForegroundColor $color;
+    Write-Host ('>' * ($nestedPromptLevel + 1)) -NoNewLine -ForegroundColor $color;
 
-        if($host.Name -like 'StudioShell*') {
-            return " ";
-        }
-        else {
-            return " `b";
-        }
+    if($host.Name -like 'StudioShell*') {
+        return " ";
+    }
+    else {
+        return " `b";
     }
 
 
