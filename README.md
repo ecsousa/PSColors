@@ -17,7 +17,7 @@ Otherwise, if you have [PsGet](http://psget.net/) installed:
 
     Install-Module PSColors
   
-Or you can install it manually coping `PSColors.psm1` to your modules folder (e.g. ` $Env:USERPROFILE\Eduardo_Sousa\Documents\WindowsPowerShell\Modules\PSColors\`)
+Or you can install it manually coping `PSColors.psm1` to your modules folder (e.g. ` $Env:USERPROFILE\Documents\WindowsPowerShell\Modules\PSColors\`)
 
 After installed, you will also need to explicit load this module:
 
