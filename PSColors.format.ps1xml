@@ -10,6 +10,35 @@
     </SelectionSet>
   </SelectionSets>
 
+  <!-- ################ GLOBAL CONTROL DEFINITIONS ################ -->
+  <Controls>
+    <Control>
+      <Name>FileSystemTypes-GroupingFormat</Name>
+      <CustomControl>
+        <CustomEntries>
+          <CustomEntry>
+            <CustomItem>
+              <Frame>
+                <LeftIndent>4</LeftIndent>
+                <CustomItem>
+                  <Text AssemblyName="System.Management.Automation" BaseName="FileSystemProviderStrings" ResourceId="DirectoryDisplayGrouping"/>
+                  <ExpressionBinding>
+                    <ScriptBlock>
+                      $_.PSParentPath.Replace("Microsoft.PowerShell.Core\FileSystem::", "")                                                  
+                    </ScriptBlock>
+                  </ExpressionBinding>
+                  <NewLine/>
+                </CustomItem> 
+              </Frame>
+            </CustomItem>
+          </CustomEntry>
+        </CustomEntries>
+      </CustomControl>
+    </Control>
+  </Controls>
+
+  <!-- ################ VIEW DEFINITIONS ################ -->
+
   <ViewDefinitions>
     <View>
       <Name>children</Name>
