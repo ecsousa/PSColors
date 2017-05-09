@@ -139,73 +139,119 @@ function Get-ChildItem {
 .ForwardHelpTargetName Get-ChildItem 
 .ForwardHelpCategory Cmdlet
 #>
-    [CmdletBinding(DefaultParameterSetName=’Items’, SupportsTransactions=$true)] 
-    param( 
-        [Parameter(ParameterSetName=’Items’, Position=0, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)] 
-        [System.String[]] 
+    [CmdletBinding(DefaultParameterSetName='Items', SupportsTransactions=$true, HelpUri='https://go.microsoft.com/fwlink/?LinkID=113308')]
+    param(
+        [Parameter(ParameterSetName='Items', Position=0, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [string[]]
         ${Path},
 
-        [Parameter(ParameterSetName=’LiteralItems’, Mandatory=$true, Position=0, ValueFromPipelineByPropertyName=$true)] 
-        [Alias(‘PSPath’)] 
-        [System.String[]] 
+        [Parameter(ParameterSetName='LiteralItems', Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('PSPath')]
+        [string[]]
         ${LiteralPath},
 
-        [Parameter(Position=1)] 
-        [System.String] 
+        [Parameter(Position=1)]
+        [string]
         ${Filter},
 
-        [System.String[]] 
+        [string[]]
         ${Include},
 
-        [System.String[]] 
+        [string[]]
         ${Exclude},
 
-        [Switch] 
+        [Alias('s')]
+        [switch]
         ${Recurse},
 
-        [Switch] 
+        [uint32]
+        ${Depth},
+
+        [switch]
         ${Force},
 
-        [Switch] 
+        [System.IO.FileAttributes]
+        ${Attributes},
+
+        [switch]
+        ${Directory},
+
+        [switch]
+        ${File},
+
+        [switch]
+        ${Hidden},
+
+        [switch]
+        ${ReadOnly},
+
+        [switch]
+        ${System},
+
+        [switch]
         ${Name})
 
-    begin 
-    { 
-        try { 
+    dynamicparam
+    {
+        try {
             $global:PSColorsUseAnsi = $Script:HasAnsi -and ($MyInvocation.PipelineLength -eq $MyInvocation.PipelinePosition);
-            $outBuffer = $null 
-            if ($PSBoundParameters.TryGetValue(‘OutBuffer’, [ref]$outBuffer)) 
-            { 
-                $PSBoundParameters[‘OutBuffer’] = 1 
-            } 
-            Write-Host $outBuffer
-            $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand(‘Get-ChildItem’, [System.Management.Automation.CommandTypes]::Cmdlet) 
-            $scriptCmd = {& $wrappedCmd @PSBoundParameters } 
-            $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin) 
-            $steppablePipeline.Begin($PSCmdlet) 
-        } catch { 
-            throw 
-        } 
+            $targetCmd = $ExecutionContext.InvokeCommand.GetCommand('Microsoft.PowerShell.Management\Get-ChildItem', [System.Management.Automation.CommandTypes]::Cmdlet, $PSBoundParameters)
+            $dynamicParams = @($targetCmd.Parameters.GetEnumerator() | Microsoft.PowerShell.Core\Where-Object { $_.Value.IsDynamic })
+            if ($dynamicParams.Length -gt 0)
+            {
+                $paramDictionary = [Management.Automation.RuntimeDefinedParameterDictionary]::new()
+                foreach ($param in $dynamicParams)
+                {
+                    $param = $param.Value
+
+                    if(-not $MyInvocation.MyCommand.Parameters.ContainsKey($param.Name))
+                    {
+                        $dynParam = [Management.Automation.RuntimeDefinedParameter]::new($param.Name, $param.ParameterType, $param.Attributes)
+                        $paramDictionary.Add($param.Name, $dynParam)
+                    }
+                }
+                return $paramDictionary
+            }
+        } catch {
+            throw
+        }
     }
 
-    process 
-    { 
-        try { 
-            $steppablePipeline.Process($_) 
-        } catch { 
-            throw 
-        } 
+    begin
+    {
+        try {
+            $outBuffer = $null
+            if ($PSBoundParameters.TryGetValue('OutBuffer', [ref]$outBuffer))
+            {
+                $PSBoundParameters['OutBuffer'] = 1
+            }
+            $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Microsoft.PowerShell.Management\Get-ChildItem', [System.Management.Automation.CommandTypes]::Cmdlet)
+            $scriptCmd = {& $wrappedCmd @PSBoundParameters }
+            $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
+            $steppablePipeline.Begin($PSCmdlet)
+        } catch {
+            throw
+        }
     }
 
-    end 
-    { 
-        try { 
-            $steppablePipeline.End() 
-            $global:PSColorsUseAnsi = $false
-        } catch { 
-            throw 
-        } 
-    } 
+    process
+    {
+        try {
+            $steppablePipeline.Process($_)
+        } catch {
+            throw
+        }
+    }
+
+    end
+    {
+        try {
+            $global:PSColorsUseAnsi = $false;
+            $steppablePipeline.End()
+        } catch {
+            throw
+        }
+    }
 }
 
 if($Script:HasAnsi) {
