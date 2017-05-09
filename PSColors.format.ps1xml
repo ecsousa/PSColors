@@ -91,7 +91,7 @@
                     $name = $_.Name
 
 
-                    if(-not($global:SuppresPSUtilsColoring)) {
+                    if($global:PSColorsUseAnsi) {
                         $regexOptions = ([System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
                         $executables = @('exe', 'bat', 'cmd', 'py', 'pl', 'ps1', 'psm1', 'vbs', 'rb', 'reg', 'fsx')
