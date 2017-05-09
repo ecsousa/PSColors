@@ -1,4 +1,5 @@
-$host.UI.RawUI.ForegroundColor = 'Gray'
+﻿$host.UI.RawUI.ForegroundColor = 'Gray'
+
 
 if($host.UI.RawUI.BackgroundColor -ne 'Black') {
     $host.UI.RawUI.BackgroundColor = 'Black'
@@ -13,19 +14,32 @@ function Test-Ansi {
 
     $oldPos = $host.UI.RawUI.CursorPosition.X
 
-        Write-Host -NoNewline "$([char](27))[0m" -ForegroundColor ($host.UI.RawUI.BackgroundColor);
+    Write-Host -NoNewline "$([char](27))[0m" -ForegroundColor ($host.UI.RawUI.BackgroundColor);
 
     $pos = $host.UI.RawUI.CursorPosition.X
 
-        if($pos -eq $oldPos) {
-            return $true;
-        }
-        else {
-            Write-Host -NoNewLine ("`b" * 4)
-            return $false
-        }
+    if($pos -eq $oldPos) {
+        return $true;
+    }
+    else {
+        Write-Host -NoNewLine ("`b" * 4)
+        return $false
+    }
 }
 
+$Script:HasAnsi = Test-Ansi
+
+if($Script:HasAnsi) {
+    $sig = '';
+    $sig = $sig + '[DllImport("kernel32.dll", SetLastError = true)] public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int dwMode);';
+    $sig = $sig + '[DllImport("kernel32.dll", SetLastError = true)] public static extern bool GetConsoleMode(IntPtr hConsoleHandle, ref int nCmdShow);';
+    $sig = $sig + '[DllImport("kernel32.dll", SetLastError = true)] public static extern IntPtr GetStdHandle(int nStdHandle);';
+    Add-Type -MemberDefinition $sig -name PSColorsNativeMethods -namespace Win32;
+
+    $Script:ConsoleHandle = [Win32.PSColorsNativeMethods]::GetStdHandle(-11);
+    $Script:ConsoleMode = 0;
+    [Win32.PSColorsNativeMethods]::GetConsoleMode($Script:ConsoleHandle, [ref] $Script:ConsoleMode);
+}
 
 function Test-Git {
     param([IO.DirectoryInfo] $dir)
@@ -42,6 +56,10 @@ function Test-Git {
 }
 
 function prompt {
+    if($Script:HasAnsi) {
+        [Win32.PSColorsNativeMethods]::SetConsoleMode($Script:ConsoleHandle, $Script:ConsoleMode) | Out-Null
+    }
+
     if($global:FSFormatDefaultColor) {
         [Console]::ForegroundColor = $global:FSFormatDefaultColor
     }
@@ -286,7 +304,7 @@ function Out-File {
 #>
 }
 
-if(Test-Ansi) {
+if($Script:HasAnsi) {
     Update-FormatData -Prepend (Join-Path $PSScriptRoot PSColors.format.ps1xml)
 }
 
