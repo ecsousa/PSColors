@@ -201,6 +201,7 @@ function Get-ChildItem {
     { 
         try { 
             $steppablePipeline.End() 
+            $global:PSColorsUseAnsi = $false
         } catch { 
             throw 
         } 
