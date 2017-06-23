@@ -10,7 +10,9 @@ This PowerShell provides no functions to be used. Instead it will provide some c
 
 Windows 10 users:
 
-    Install-Module PSColors -Scope CurrentUser
+    Install-Module PSColors -Scope CurrentUser -AllowClobber
+    
+***NOTE**: `AllowClobber` is only required after Aniversary Update*
 
 Otherwise, if you have [PsGet](http://psget.net/) installed:
 
