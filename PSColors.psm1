@@ -1,11 +1,4 @@
-﻿$host.UI.RawUI.ForegroundColor = 'Gray'
-
-
-if($host.UI.RawUI.BackgroundColor -ne 'Black') {
-    $host.UI.RawUI.BackgroundColor = 'Black'
-    clear
-}
-
+﻿
 # Function to check wheter current Console support ANSI codes
 function Test-Ansi {
 
