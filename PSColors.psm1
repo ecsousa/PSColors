@@ -6,12 +6,17 @@ if($host.UI.RawUI.BackgroundColor -ne 'Black') {
     clear
 }
 
+# Function to check wheter current Console support ANSI codes
 function Test-Ansi {
 
+    # Powershell ISE don't support ANSI, and this test will print ugly chars there
     if($host.PrivateData.ToString() -eq 'Microsoft.PowerShell.Host.ISE.ISEOptions') {
         return $false;
     }
 
+    # To test is console supports ANSI, we will print an ANSI code
+    # and check if cursor postion has changed. If it has, ANSI is not
+    # supported
     $oldPos = $host.UI.RawUI.CursorPosition.X
 
     Write-Host -NoNewline "$([char](27))[0m" -ForegroundColor ($host.UI.RawUI.BackgroundColor);
@@ -22,6 +27,7 @@ function Test-Ansi {
         return $true;
     }
     else {
+        # If ANSI is not supported, let's clean up ugly ANSI escapes
         Write-Host -NoNewLine ("`b" * 4)
         return $false
     }
@@ -30,6 +36,10 @@ function Test-Ansi {
 $Script:HasAnsi = Test-Ansi
 
 if($Script:HasAnsi) {
+    # If ANSI is supported, save current console mode, so we can restore it latter.
+    # Some programs, like cygwin's git disables ANSI support in windows Console.
+    # This it will bad side effetcts from GIT.
+
     $sig = '';
     $sig = $sig + '[DllImport("kernel32.dll", SetLastError = true)] public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int dwMode);';
     $sig = $sig + '[DllImport("kernel32.dll", SetLastError = true)] public static extern bool GetConsoleMode(IntPtr hConsoleHandle, ref int nCmdShow);';
@@ -43,20 +53,26 @@ if($Script:HasAnsi) {
 
 function Test-Git {
     param([IO.DirectoryInfo] $dir)
+    # Function to check wheter directory is in a git repository
 
+    # If have .git dir, it's a git repo
     if(Test-Path (Join-Path $dir.FullName '.git')) {
         return $true;
     }
 
+    # If reached root dir, we are not in a git repository
     if(($dir.Parent -eq $null) -or ($dir -eq $dir.Parent)) {
         return $false;
     }
 
+    # Check parent dir. Let's hope PowerShell supports tail recursion
     return Test-Git ($dir.Parent.FullName)
 }
 
+# Overriding PowerShell's default prompt function!
 function prompt {
     if($Script:HasAnsi) {
+        # Making sure we are restoing original Console Mode in case someone (e.g. GIT) has changed it
         [Win32.PSColorsNativeMethods]::SetConsoleMode($Script:ConsoleHandle, $Script:ConsoleMode) | Out-Null
     }
 
@@ -64,20 +80,26 @@ function prompt {
         [Console]::ForegroundColor = $global:FSFormatDefaultColor
     }
 
-    $isFS = (gi .).PSProvider.Name -eq 'FileSystem';
+    $isFS = (Get-Item .).PSProvider.Name -eq 'FileSystem';
 
     if($isFS) {
-        [system.Environment]::CurrentDirectory = (convert-path ".");
+        # PowerShell don't change CurrentDirectory when you navigate throught File Sytem
+        # which causes problem when executing external programs providing relative paths
+        # This will fix the issue, syncing PowerShell current localtion to Windows Environment
+        [system.Environment]::CurrentDirectory = (Convert-Path ".");
     }
 
 
+    #Check if current user has admin privilges so we can use a different color
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     $admin = (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 
     $branch = $null;
 
+    # Legancy functionality to display git branch. Recommend to use posh-git, as it has better info
+    # PSColors will not use its own branching displaying if it dectects posh-git is present
     if(-not(Get-Command Write-VcsStatus -ErrorAction SilentlyContinue)) {
-        if( $isFS -and (Test-Git (cvpa .)) -and (Get-Command git)) {
+        if( $isFS -and (Test-Git (Convert-Path .)) -and (Get-Command git)) {
             $branch = (git branch 2>$null) | %{ ([regex] '\* (.*)').match($_) } | ? { $_.Success } | %{ $_.Groups[1].Value } | Select-Object -First 1
         }
     }
@@ -102,6 +124,7 @@ function prompt {
     $host.UI.RawUI.WindowTitle = $title
 
 
+    # Choosing color based on admin's privileges
     if($admin) {
         $color = 'Yellow';
     }
@@ -111,19 +134,23 @@ function prompt {
 
     Write-Host ([System.Char](10)) -NoNewLine;
 
+    # Print git branch, if posh-git is not present
     if($branch) {
         Write-Host "[" -NoNewLine -ForegroundColor Yellow
         Write-Host "$branch" -NoNewLine -ForegroundColor Cyan
         Write-Host "] " -NoNewLine -ForegroundColor Yellow
     }
 
+    # If we have posh-git, use it
     if(Get-Command Write-VcsStatus -ErrorAction SilentlyContinue) {
         Write-VcsStatus;
     }
 
+    # Write prompt info
     Write-Host $executionContext.SessionState.Path.CurrentLocation -NoNewLine -ForegroundColor $color;
     Write-Host ('>' * ($nestedPromptLevel + 1)) -NoNewLine -ForegroundColor $color;
 
+    # Prevents PowerShell default prompt printing
     if($host.Name -like 'StudioShell*') {
         return " ";
     }
@@ -133,6 +160,9 @@ function prompt {
 
 
 }
+
+# Wrapper for Get-ChildItem, that will aid PSColors.format.ps1xml detect if it's outputing to console,
+# and hence use ANSI code for coloring different file types
 
 function Get-ChildItem {
 <#
@@ -194,7 +224,9 @@ function Get-ChildItem {
     dynamicparam
     {
         try {
+            # Set global variable to indicates PSColors.format.ps1xml should output ANSI colors
             $global:PSColorsUseAnsi = $Script:HasAnsi -and ($MyInvocation.PipelineLength -eq $MyInvocation.PipelinePosition);
+
             $targetCmd = $ExecutionContext.InvokeCommand.GetCommand('Microsoft.PowerShell.Management\Get-ChildItem', [System.Management.Automation.CommandTypes]::Cmdlet, $PSBoundParameters)
             $dynamicParams = @($targetCmd.Parameters.GetEnumerator() | Microsoft.PowerShell.Core\Where-Object { $_.Value.IsDynamic })
             if ($dynamicParams.Length -gt 0)
@@ -246,6 +278,7 @@ function Get-ChildItem {
     end
     {
         try {
+            # Get-ChildItem has ended. PSColors.format.ps1xml will not longer append ANSI codes
             $global:PSColorsUseAnsi = $false;
             $steppablePipeline.End()
         } catch {
@@ -255,6 +288,7 @@ function Get-ChildItem {
 }
 
 if($Script:HasAnsi) {
+    # If ANSI is active, use custom PSColors.format.ps1xml for output coloring
     Update-FormatData -Prepend (Join-Path $PSScriptRoot PSColors.format.ps1xml)
 }
 
