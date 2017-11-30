@@ -250,8 +250,9 @@ function Get-ChildItem {
             {
                 $PSBoundParameters['OutBuffer'] = 1
             }
+            $showDotFiles = -not $env:PSCOLORS_HIDE_DOTFILE -or $env:PSCOLORS_HIDE_DOTFILE.ToLower() -ne 'true'
             $wrappedCmd = $ExecutionContext.InvokeCommand.GetCommand('Microsoft.PowerShell.Management\Get-ChildItem', [System.Management.Automation.CommandTypes]::Cmdlet)
-            $scriptCmd = {& $wrappedCmd @PSBoundParameters }
+            $scriptCmd = {& $wrappedCmd @PSBoundParameters | ? { $Force -or $showDotFiles -or -not $_.Name.StartsWith('.') } }
             $steppablePipeline = $scriptCmd.GetSteppablePipeline($myInvocation.CommandOrigin)
             $steppablePipeline.Begin($PSCmdlet)
         } catch {

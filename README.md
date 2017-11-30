@@ -6,6 +6,16 @@ This PowerShell provides no functions to be used. Instead it will provide some c
 * Green prompt, without changing the actual foreground color
 * If used in a ANSI console (like [ConEmu](https://github.com/Maximus5/ConEmu)), it will also provide coloring for files output
 
+## Extra features
+
+### Hiding _dot files_
+
+By setting environment variable PSCOLORS\_HIDE\_DOTFILE to **true**,
+PSColors will prevent `Get-ChildItem` Cmdlet from outputting files whose
+names start with a dot, unless `-Force` is used.
+
+This will make PowerShell behave similar to Unix's `ls` command.
+
 ## Installing
 
 Windows 10 users:

@@ -1,6 +1,6 @@
-@{
+﻿@{
 RootModule = 'PSColors.psm1'
-ModuleVersion = '1.1.4'
+ModuleVersion = '1.2.0'
 GUID = 'a049cbc8-595a-41a0-b9f6-ae0098fcc15e'
 Author = 'Eduardo Sousa'
 Description = 'Nice prompt coloring for PowerShell'
