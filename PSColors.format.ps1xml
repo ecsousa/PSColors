@@ -102,13 +102,17 @@
                         $compressedRegex = New-Object regex("\.($([string]::Join('|', $compresseds)))`$", $regexOptions)
                         $textRegex = New-Object regex("\.($([string]::Join('|', $texts)))`$", $regexOptions)
 
+                        $symlinkColor = "$([char](27))[36;1m"
                         $directoryColor = "$([char](27))[34;1m"
                         $executableColor = "$([char](27))[32;1m"
                         $compressedColor = "$([char](27))[31;1m"
                         $textColor = "$([char](27))[33;1m"
                         $resetColor = "$([char](27))[0m"
 
-                        if ($_ -is [System.IO.DirectoryInfo]) {
+                        if ($_.Target) {
+                            $name = "$symlinkColor$name$resetColor -> $(Resolve-Path -Relative $_.Target)"
+                        }
+                        elseif ($_ -is [System.IO.DirectoryInfo]) {
                             $name = "$directoryColor$name/$resetColor"
                         }
                         elseif ($compressedRegex.IsMatch($_.Name)) {
